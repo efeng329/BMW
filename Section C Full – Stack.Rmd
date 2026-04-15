@@ -1,0 +1,102 @@
+---
+title: "Section C"
+output: html_document
+date: "2026-04-15"
+---
+
+#Section C - Full Stack Design
+
+#Overview
+
+The goal is to build a simple full-stack application to analyze mortality rates across facilities, time, and locations.
+
+Due to time constraints, this submission focuses on system design and architecture rather than full implementation.
+
+
+# System Architecture
+
+Frontend:
+- React (or simple HTML + JavaScript)
+- Responsible for user interaction and visualization
+
+Backend:
+- Python (Flask / FastAPI)
+- Handles filtering, aggregation, and API responses
+
+Database:
+- CSV or SQLite
+- Stores mortality dataset
+
+# Backend Design
+
+# 1. Filtering
+
+Supports:
+- Year
+- Month
+- State
+- ZIP Code
+- Facility Name
+
+
+# 2. API Endpoints
+
+# Summary Endpoint
+
+GET/Summary
+Returns:
+
+- total facilities
+- average mortality rate
+- min / max mortality
+- top 10 highest
+- top 10 lowest
+# Table Endpoint
+
+GET/tablepage=1&pageSize=10
+Returns:
+
+- paginated data
+- total count
+# Analysis Endpoint
+
+GET/Analysis
+Returns:
+
+- monthly trend
+- state comparison
+- zip comparison
+- distribution
+# Frontend Design
+# Page 1: Summary
+
+Components:
+- Filters panel
+- KPI cards (total, avg, min, max)
+- Top 10 lists
+- Data table (paginated)
+
+# Page 2: Analysis
+
+Charts:
+- Line chart (monthly trend)
+- Bar chart (state comparison)
+- Histogram (distribution)
+
+# Data Handling
+
+- Parse date into Year and Month
+- Handle missing values (drop or fill)
+- Sort values for ranking
+- Ensure consistent data types
+
+# Optional Improvements
+
+- Export results as CSV
+- Compare multiple states
+- Highlight outliers
+- Add caching for performance
+
+# Conclusion
+
+This design focuses on simplicity, clarity, and scalability. The backend handles all computation, while the frontend focuses on visualization and user interaction.
