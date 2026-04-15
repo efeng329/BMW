@@ -1,0 +1,209 @@
+---
+title: "BMW"
+output:
+  html_document: default
+  pdf_document: default
+date: "2026-04-12"
+---
+
+SectionA
+```{r setup, include=FALSE}
+library(tidyverse)
+df <- read_csv("C:/Users/Fengxinyu/Downloads/bmw_global_sales_2018_2025.csv")
+```
+
+
+```{r question_a_trend}
+bev_trend <- df %>%
+  group_by(Year, Region) %>%
+  summarise(
+    BEV_Share = mean(BEV_Share),
+    Units_Sold = sum(Units_Sold),
+    Revenue = sum(Revenue_EUR),
+    .groups = "drop"
+  )
+
+ggplot(bev_trend, aes(x = Year, y = BEV_Share, color = Region)) +
+  geom_line(linewidth = 1.2) +
+  geom_point() +
+  labs(
+    title = "BEV Share Growth Over Time by Region",
+    y = "BEV Share"
+  )
+```
+```{r question_a_BEV_Share_and_Units_Sold}
+ggplot(df, aes(x = BEV_Share, y = Units_Sold, color = Region)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    title = "Relationship between BEV Share and Units Sold",
+    x = "BEV Share",
+    y = "Units Sold"
+  )
+```
+
+```{r question_a_BEV_Share_and_Revenue}
+ggplot(df, aes(x = BEV_Share, y = Revenue_EUR, color = Region)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    title = "Relationship between BEV Share and Revenue",
+    x = "BEV Share",
+    y = "Revenue (EUR)"
+  )
+```
+
+```{r question_a_group_by_region}
+df %>%
+  group_by(Region) %>%
+  summarise(
+    corr_units = cor(BEV_Share, Units_Sold),
+    corr_revenue = cor(BEV_Share, Revenue_EUR)
+  )
+```
+
+Section A
+
+To investigate how BEV adoption evolves over time and its relationship with sales performance, a multi-step exploratory data analysis was conducted using grouped aggregation, visualization, and correlation analysis.
+
+First, the dataset was aggregated by Year and Region to compute the average BEV_Share and total Units_Sold and Revenue_EUR. A time-series line chart was then generated to visualize BEV adoption trends across regions. The plot shows a consistent and nearly linear increase in BEV_Share from 2018 to 2025 in all regions, indicating a global and synchronized transition toward electrification rather than region-specific divergence.
+
+Next, to examine whether electrification is associated with market performance, scatter plots with linear regression lines were constructed to explore the relationships between BEV_Share and Units_Sold, as well as BEV_Share and Revenue_EUR. Both plots demonstrate a positive relationship, where higher BEV penetration generally corresponds to increased sales volume and revenue. However, the dispersion of points suggests that the relationship is moderate rather than strong, indicating the presence of other influencing factors such as pricing strategies, model mix, and regional demand conditions.
+
+To further validate these visual insights, a correlation analysis was performed by region. The results show positive but relatively weak correlations between BEV_Share and both Units_Sold and Revenue_EUR across all regions. Among them, China and the USA exhibit slightly stronger correlations, suggesting that electrification has a more noticeable impact on sales performance in these markets. In contrast, the Rest of World shows the weakest relationship, indicating slower or less consistent EV-driven growth.
+
+Overall, the analysis suggests that while BEV adoption is steadily increasing worldwide and positively associated with business performance, the strength of this relationship varies by region. China appears to demonstrate the strongest transition toward electrification, both in terms of adoption trend and its linkage to market outcomes.
+
+
+SectionB
+```{r question_b_relationship}
+## Section B: Price Elasticity Analysis
+
+# GDP（High vs Low）
+df <- df %>%
+  mutate(
+    GDP_level = ifelse(GDP_Growth > median(GDP_Growth), "High GDP", "Low GDP")
+  )
+
+# Visualization: Price vs Sales (Grouped by GDP)
+ggplot(df, aes(x = Avg_Price_EUR, y = Units_Sold, color = GDP_level)) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    title = "Price vs Units Sold under Different GDP Conditions",
+    x = "Average Price (EUR)",
+    y = "Units Sold"
+  )
+
+# Calculate price elasticity (using the Correlation method, simple and straightforward)
+elasticity_table <- df %>%
+  group_by(Model) %>%
+  summarise(
+    elasticity = cor(Avg_Price_EUR, Units_Sold),
+    .groups = "drop"
+  ) %>%
+  arrange(elasticity)
+
+elasticity_table
+
+#Consider the impact on GDP
+elasticity_gdp <- df %>%
+  group_by(Model, GDP_level) %>%
+  summarise(
+    elasticity = cor(Avg_Price_EUR, Units_Sold),
+    .groups = "drop"
+  )
+
+elasticity_gdp
+
+#log-log regression (true economic elasticity)
+elasticity_model <- lm(log(Units_Sold) ~ log(Avg_Price_EUR), data = df)
+
+summary(elasticity_model)
+```
+
+Section B
+
+This question aims to examine two key aspects. First, how sensitive different models are to price changes, that is, whether an increase in price leads to a noticeable decrease in sales. Second, whether this price sensitivity varies under different economic conditions, specifically whether consumers respond differently to price changes during periods of high versus low GDP growth.
+
+To address this, the analysis follows a step-by-step approach. First, an overall scatter plot is used to explore the relationship between Avg_Price_EUR and Units_Sold. Then, price sensitivity is measured at the model level by calculating elasticity, in order to identify which models are more responsive to price changes. Next, GDP growth is divided into high and low groups to examine whether the same model exhibits different levels of sensitivity under different economic conditions. Finally, a log-log regression model is applied to provide a more formal validation of the overall relationship.
+
+In the first step, the horizontal axis represents the average price (Avg_Price_EUR), and the vertical axis represents units sold (Units_Sold), with colour distinguishing between high-GDP and low-GDP conditions. The geom_smooth(method = "lm") function adds a fitted linear trend line to help visualise the overall relationship.
+
+From the plot, both trend lines are nearly flat and slightly upward sloping, indicating that there is no clear negative relationship between price and sales at the aggregate level. In other words, higher prices do not correspond to lower sales in any obvious way. Additionally, the trend lines for high and low GDP conditions are very similar, suggesting that macroeconomic conditions do not significantly alter the overall price–sales relationship.
+
+This implies that, within this dataset, consumers are not highly sensitive to price changes overall. Price does not appear to be a dominant factor driving sales. One possible explanation is that higher-priced models tend to be positioned in the premium segment, where demand remains relatively strong despite higher prices. As a result, the typical pattern of “higher price leading to lower sales” is not clearly observed in this case.
+
+In the second part of the analysis, price elasticity is examined at the model level. In this case, elasticity is approximated using the correlation between Avg_Price_EUR and Units_Sold. Strictly speaking, this is not the standard economic definition of price elasticity, but rather a proxy measure that reflects the degree of price sensitivity.
+
+Based on the results, a negative correlation indicates that higher prices are associated with lower sales, which aligns with the traditional concept of price sensitivity. In contrast, a positive correlation suggests that higher prices are associated with higher sales. This may indicate that the model’s performance is driven more by factors such as brand positioning, consumer preferences, product upgrades, or market demand structure, rather than simply price competitiveness.
+
+From the results, the models with the most negative correlations are iX, 5 Series, and MINI. This suggests that these models are relatively more sensitive to price changes, with sales more likely to decline as prices increase. On the other hand, models such as X5, X7, and 3 Series show positive correlations, indicating that their sales are not negatively affected by higher prices. Instead, their performance may be supported by strong brand appeal, premium positioning, or stable demand in higher-end market segments, resulting in lower price sensitivity.
+
+In the third part of the analysis, price elasticity is further examined under different GDP conditions. Specifically, each model is divided into two groups: High GDP and Low GDP, and the correlation between price and units sold is calculated separately for each group. This allows us to assess whether price sensitivity for the same model changes under different economic environments.
+
+For the 3 Series, the correlation is 0.0206 under high GDP and 0.1106 under low GDP. Both values are positive, with a stronger positive relationship under low GDP conditions. This suggests that the 3 Series does not exhibit clear price sensitivity in either economic environment.
+
+For the 5 Series, the correlation is -0.0616 under high GDP and -0.0181 under low GDP. The relationship is more negative under high GDP conditions, indicating slightly stronger price sensitivity when the economy is performing well, although the overall magnitude remains small.
+
+Similarly, for MINI, the correlation is -0.0459 under high GDP and -0.0208 under low GDP. This again suggests a slightly stronger negative relationship in high GDP conditions, but the effect is still relatively weak.
+
+The X3 shows a more noticeable change, with a correlation of -0.0280 under high GDP and 0.0131 under low GDP. This shift from a weak negative to a weak positive relationship indicates that economic conditions may influence how price and sales interact for this model.
+
+In contrast, the X5 shows consistently positive correlations (0.1096 for high GDP and 0.0678 for low GDP), suggesting that its sales are not driven by price sensitivity but are more likely supported by strong demand in the premium segment.
+
+Overall, while GDP conditions do appear to influence the price–sales relationship for some models, the magnitude of these changes is relatively small and does not form a consistent pattern across all models. This suggests that macroeconomic conditions have some effect, but are not the dominant factor, and that differences between individual models are more significant than the impact of GDP itself.
+
+In the final step, a log-log regression model was applied to provide a more formal measure of price elasticity. The estimated coefficient for log(Avg_Price_EUR) is 0.0705, which implies that a 1% increase in price is associated with an approximately 0.07% increase in units sold. This indicates a very small positive relationship, meaning that higher prices do not lead to a decline in sales. Instead, they are slightly associated with higher sales levels. This pattern may reflect the presence of high-priced models that still perform well in the market, where product positioning and demand structure can offset the traditional negative effect of price.
+
+The p-value is 0.0417, which is below the 0.05 threshold, suggesting that the relationship is statistically significant and unlikely to be purely driven by random variation. However, the R-squared value is only 0.001351, meaning that the model explains approximately 0.135% of the variation in sales. This is extremely low, indicating that although the relationship is statistically significant, its explanatory power is minimal.
+
+From a practical or business perspective, this suggests that price has very limited influence on sales outcomes in this dataset. Instead, sales are more likely driven by other factors such as model positioning, regional demand, and broader market dynamics.
+
+Overall, the findings are consistent across the analysis. At the aggregate level, there is no clear negative relationship between price and sales. At the model level, only a few models such as iX, 5 Series, and MINI show more noticeable negative correlations, indicating relatively higher price sensitivity. While GDP conditions do appear to influence price sensitivity for certain models, the effects are generally weak and not consistent across all models. The log-log regression further confirms that although the price coefficient is statistically significant, its effect is very small and its explanatory power is extremely limited. Therefore, price is not a primary driver of sales variation in this dataset.
+
+```{r section_c_seasonality_overall}
+df %>%
+  group_by(Month) %>%
+  summarise(
+    Revenue = sum(Revenue_EUR),
+    Units = sum(Units_Sold),
+    .groups = "drop"
+  ) %>%
+  ggplot(aes(x = Month, y = Revenue)) +
+  geom_line(linewidth = 1.2) +
+  geom_point() +
+  labs(
+    title = "Monthly Revenue Pattern",
+    y = "Total Revenue"
+  )
+```
+
+```{r section_c_region}
+ggplot(df, aes(x = Month, y = Revenue_EUR, color = Region)) +
+  geom_line(stat = "summary", fun = "sum") +
+  labs(title = "Seasonality Across Regions")
+```
+
+
+```{r section_c_fuel}
+df %>%
+  mutate(
+    Fuel_level = ifelse(Fuel_Price_Index > median(Fuel_Price_Index), "High Fuel", "Low Fuel")
+  ) %>%
+  ggplot(aes(x = Month, y = Units_Sold, color = Fuel_level)) +
+  geom_line(stat = "summary", fun = "sum") +
+  labs(title = "Seasonality under Fuel Price Conditions")
+```
+
+SectionC
+
+To identify seasonal patterns, the data was aggregated at the monthly level to examine trends in total revenue and units sold. The results reveal clear seasonality, with noticeable peaks occurring around March, June, and December, and a distinct decline in October. This suggests a recurring demand cycle throughout the year, likely influenced by promotional periods, product cycles, or consumer purchasing behaviour, particularly the strong year-end effect.
+
+When comparing across regions, the seasonal patterns remain highly consistent, as all regions exhibit similar timing of peaks and troughs. However, the magnitude of fluctuations differs across regions, with markets such as China and Europe showing larger variations. This indicates that while seasonality is a global phenomenon, its intensity varies depending on regional market dynamics.
+
+To further examine interaction effects, the data was segmented by fuel price levels. The results show that the overall seasonal pattern remains stable under both high and low fuel price conditions, with peaks occurring in similar months. However, the relative height of these peaks differs, suggesting that fuel prices influence the strength of demand rather than the timing of seasonal cycles.
+
+Overall, the analysis demonstrates that seasonality is a key driver of revenue and sales patterns. While external factors such as fuel prices (and similarly GDP conditions) can amplify or dampen demand, they do not fundamentally alter the underlying seasonal structure.
+
+From a business perspective, these findings suggest that inventory planning, pricing strategies, and marketing campaigns should be aligned with predictable seasonal demand cycles, while also accounting for macroeconomic conditions that may amplify or soften peak sales periods.
